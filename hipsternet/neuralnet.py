@@ -184,7 +184,7 @@ class FeedForwardNet(NeuralNet):
 
 # TODO: Do I need to define/add it to somewhere else as well?
 class ResNet(NeuralNet):
-    def __init__(self, D, C, H, lam=1e-8, p_dropout=.8, loss='cross_ent', nonlin='relu', optimisation='none', num_layers=4):
+    def __init__(self, D, C, H, lam=1e-5, p_dropout=.8, loss='cross_ent', nonlin='relu', optimisation='none', num_layers=4):
         self.num_layers = num_layers
         self.antisymmetric = optimisation == 'antisymmetric'
         self.leapfrog = optimisation == 'leapfrog'
@@ -199,6 +199,7 @@ class ResNet(NeuralNet):
             if self.leapfrog and i != 1:
                 h, cache['h_cache'+str(i)], cache['nl_cache'+str(i)] = \
                     l.leap_forward(h, prev, self.model['W'+str(i)], self.model['b'+str(i)], i == 2)
+                # print(h)
             else:
                 h, cache['h_cache'+str(i)], cache['nl_cache'+str(i)] = \
                     l.fcrelu_forward(h, self.model['W'+str(i)], self.model['b'+str(i)])
@@ -225,7 +226,7 @@ class ResNet(NeuralNet):
                 dh, dprevH, dW, db = l.leap_backward(dh, dprevH, cache['h_cache'+str(i)], cache['nl_cache'+str(i)], i == 2)
             else:
                 dh, dW, db = l.fcrelu_backward(dh, cache['h_cache'+str(i)], cache['nl_cache'+str(i)], self.antisymmetric)
-            grad['W' + str(i)] = dW
+            grad['W' + str(i)] = dW #+ reg.dl2_reg(self.model['W' + str(i)], self.lam)
             grad['b' + str(i)] = db
         # grad['W1'] = 0
         # grad['b1'] = 0
@@ -239,7 +240,7 @@ class ResNet(NeuralNet):
             b1=np.zeros((1, H)),
         )
         for i in range(2, num_layers):
-            W = np.random.randn(H, H) / np.sqrt(H/2)
+            W = np.random.randn(H, H) / np.sqrt(H/2) / H
             if self.antisymmetric:
                 W = (W-W.T)/2
             self.model['W' + str(i)] = W
