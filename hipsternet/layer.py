@@ -35,7 +35,7 @@ def fc_backward(dout, cache, antisymmetric=False):
     return dX, dW, db
 
 def fcleap_forward(X, W, b):
-    out = X @ np.dot(W.T, W) + b
+    out = X @ (-np.dot(W.T, W)) + b
     cache = (W, X)
     return out, cache
 
@@ -43,9 +43,9 @@ def fcleap_forward(X, W, b):
 def fcleap_backward(dout, cache):
     W, h = cache
 
-    dW = (h@W.T+h@W.T).T @ dout
+    dW = (-(h@W+h@W.T)).T @ dout
     db = np.sum(dout, axis=0)
-    dX = dout @ np.dot(W.T, W).T
+    dX = dout @ (-np.dot(W.T, W).T)
 
     return dX, dW, db
 
