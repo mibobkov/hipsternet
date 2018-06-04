@@ -56,13 +56,13 @@ class NeuralNet(object):
         if 'regression' in loss:
             self.mode = 'regression'
 
-    def train_step(self, X_train, y_train):
+    def train_step(self, X_train, y_train, iter):
         """
         Single training step over minibatch: forward, loss, backprop
         """
-        y_pred, cache = self.forward(X_train, train=True)
+        y_pred, cache = self.forward(X_train, iter, train=True)
         loss = self.loss_funs[self.loss](self.model, y_pred, y_train, self.lam)
-        grad = self.backward(y_pred, y_train, cache)
+        grad = self.backward(y_pred, y_train, cache, iter)
 
         return grad, loss
 
@@ -78,10 +78,10 @@ class NeuralNet(object):
             y_pred = np.round(score)
             return y_pred
 
-    def forward(self, X, train=False):
+    def forward(self, X, iter, train=False):
         raise NotImplementedError()
 
-    def backward(self, y_pred, y_train, cache):
+    def backward(self, y_pred, y_train, cache, iter):
         raise NotImplementedError()
 
     def _init_model(self, D, C, H):
@@ -94,6 +94,7 @@ class FeedForwardNet(NeuralNet):
         super().__init__(D, C, H, lam, p_dropout, loss, nonlin)
 
     def forward(self, X, train=False):
+        self.done = True
         gamma1, gamma2 = self.model['gamma1'], self.model['gamma2']
         beta1, beta2 = self.model['beta1'], self.model['beta2']
 
@@ -181,6 +182,154 @@ class FeedForwardNet(NeuralNet):
             bn2_var=np.zeros((1, H))
         )
 
+# TODO: Do I need to define/add it to somewhere else as well?
+class ResNet(NeuralNet):
+    def __init__(self, D, C, H, lam=1e-8, p_dropout=.8, loss='cross_ent', nonlin='relu', optimisation='none', num_layers=4):
+        self.num_layers = num_layers
+        self.antisymmetric = optimisation == 'antisymmetric'
+        self.leapfrog = optimisation == 'leapfrog'
+        super().__init__(D, C, H, lam, p_dropout, loss, nonlin)
+
+    def forward(self, X, iter, train=False):
+        cache = dict(X=X)
+        h = X
+        prev = 0
+        for i in range(1, self.num_layers):
+            temp = h
+            if self.leapfrog and i != 1:
+                h, cache['h_cache'+str(i)], cache['nl_cache'+str(i)] = \
+                    l.leap_forward(h, prev, self.model['W'+str(i)], self.model['b'+str(i)], i == 2)
+            else:
+                h, cache['h_cache'+str(i)], cache['nl_cache'+str(i)] = \
+                    l.fcrelu_forward(h, self.model['W'+str(i)], self.model['b'+str(i)])
+            prev = temp
+                
+        score, cache['score_cache'] = l.fc_forward(h, self.model['W'+str(self.num_layers)], self.model['b'+str(self.num_layers)])
+
+        return score, cache
+
+    def backward(self, y_pred, y_train, cache, iter):
+        num_layers = self.num_layers
+        # Output layer
+        grad_y = self.dloss_funs[self.loss](y_pred, y_train)
+
+        # Fourth layer
+        dh, dW, db = l.fc_backward(grad_y, cache['score_cache'])
+        grad = dict()
+        grad['W' + str(num_layers)] = dW
+        grad['b' + str(num_layers)] = db
+
+        dprevH = 0
+        for i in range(num_layers-1, 0, -1):
+            if self.leapfrog and i > 1:
+                dh, dprevH, dW, db = l.leap_backward(dh, dprevH, cache['h_cache'+str(i)], cache['nl_cache'+str(i)], i == 2)
+            else:
+                dh, dW, db = l.fcrelu_backward(dh, cache['h_cache'+str(i)], cache['nl_cache'+str(i)], self.antisymmetric)
+            grad['W' + str(i)] = dW
+            grad['b' + str(i)] = db
+        # grad['W1'] = 0
+        # grad['b1'] = 0
+
+        return grad
+
+    def _init_model(self, D, C, H):
+        num_layers = self.num_layers
+        self.model = dict(
+            W1=np.random.randn(D, H) / np.sqrt(D / 2.),
+            b1=np.zeros((1, H)),
+        )
+        for i in range(2, num_layers):
+            W = np.random.randn(H, H) / np.sqrt(H/2)
+            if self.antisymmetric:
+                W = (W-W.T)/2
+            self.model['W' + str(i)] = W
+            self.model['b' + str(i)] = np.zeros((1, H))
+        self.model['W' + str(num_layers)] = np.random.randn(H, C) / np.sqrt(H / 2.)
+        self.model['b' + str(num_layers)] = np.zeros((1, C))
+
+    """
+    def __init__(self, D, C, H, lam=1e-3, p_dropout=.8, loss='cross_ent', nonlin='relu'):
+        super().__init__(D, C, H, lam, p_dropout, loss, nonlin)
+
+    def forward(self, X, train=False):
+        gamma1 = self.model['gamma1']
+        beta1 = self.model['beta1']
+
+        bn1_cache = None
+
+        ### Conv-1 
+        # 64x1x28x28
+        h1, h1_cache = l.conv_forward(X, self.model['W1'], self.model['b1'])
+        # Batch normalisation 64x7840
+        h1 = h1.reshape(X.shape[0], -1)
+        bn1_cache = (self.bn_caches['bn1_mean'], self.bn_caches['bn1_var'])
+        h1, bn1_cache, run_mean, run_var = l.bn_forward(h1, gamma1, beta1, bn1_cache, train=train)
+        self.bn_caches['bn1_mean'], self.bn_caches['bn1_var'] = run_mean, run_var
+        h1 = h1.reshape(X.shape[0], self.model['W1'].shape[0], 28, 28)
+        # Relu
+        h1, n1_cache1 = l.relu_forward(h1)
+        ###
+
+        ### Pool-1
+        hpool, hpool_cache = l.maxpool_forward(h1)
+        h2 = hpool.ravel().reshape(X.shape[0], -1)
+        ###
+
+        # FC-7
+        h3, nl_cache3 = l.relu_forward(h2)
+
+        # Softmax
+        score, score_cache = l.fc_forward(h3, self.model['W3'], self.model['b3'])
+
+        return score, (X, h1_cache, score_cache, hpool_cache, hpool, n1_cache1, nl_cache3, bn1_cache)
+
+    def backward(self, y_pred, y_train, cache):
+        X, h1_cache, score_cache, hpool_cache, hpool, n1_cache1, nl_cache3, bn1_cache = cache
+
+        # Output layer
+        grad_y = self.dloss_funs[self.loss](y_pred, y_train)
+
+        # FC-7
+        dh3, dW3, db3 = l.fc_backward(grad_y, score_cache)
+        dh2 = self.backward_nonlin(dh3, nl_cache3)
+
+        dpool = dh2.ravel().reshape(hpool.shape)
+
+        # Pool-1
+        dh1 = l.maxpool_backward(dpool, hpool_cache)
+        dh1 = self.backward_nonlin(dh1, n1_cache1)
+        dh1 = dh1.reshape(X.shape[0], -1)
+        dh1, dgamma1, dbeta1 = l.bn_backward(dh1, bn1_cache)
+        dh1 = dh1.reshape(X.shape[0], self.model['W1'].shape[0], 28, 28)
+
+        # Conv-1
+        dX, dW1, db1 = l.conv_backward(dh1, h1_cache)
+
+        grad = dict(
+            W1=dW1, W3=dW3, b1=db1, b3=db3, gamma1=dgamma1, beta1=dbeta1
+        )
+
+        return grad
+
+    def _init_model(self, D, C, H):
+        self.model = dict(
+            W1=np.random.randn(D, 1, 3, 3) / np.sqrt(D / 2.),
+            #W2=np.random.randn(D * 14 * 14, H) / np.sqrt(D * 14 * 14 / 2.),
+            W3=np.random.randn(D*14*14, C) / np.sqrt(H / 2.),
+            b1=np.zeros((D, 1)),
+            #b2=np.zeros((1, H)),
+            b3=np.zeros((1, C)),
+            # Ds and others, what are the dimensions
+            gamma1=np.ones((1, D*28*28)),
+            beta1=np.zeros((1, D*28*28)), 
+        )
+
+        self.bn_caches = dict(
+            # Dimensions
+            bn1_mean=np.zeros((1, D*28*28)),
+            bn1_var=np.zeros((1, D*28*28)),
+        )
+        """
 
 class ConvNet(NeuralNet):
 

@@ -30,7 +30,7 @@ def sgd(nn, X_train, y_train, val_set=None, alpha=1e-3, mb_size=256, n_iter=2000
         idx = np.random.randint(0, len(minibatches))
         X_mini, y_mini = minibatches[idx]
 
-        grad, loss = nn.train_step(X_mini, y_mini)
+        grad, loss = nn.train_step(X_mini, y_mini, iter)
 
         if iter % print_after == 0:
             if val_set:
@@ -178,7 +178,7 @@ def adam(nn, X_train, y_train, val_set=None, alpha=0.001, mb_size=256, n_iter=20
         idx = np.random.randint(0, len(minibatches))
         X_mini, y_mini = minibatches[idx]
 
-        grad, loss = nn.train_step(X_mini, y_mini)
+        grad, loss = nn.train_step(X_mini, y_mini, iter)
 
         if iter % print_after == 0:
             if val_set:

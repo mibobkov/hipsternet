@@ -4,6 +4,18 @@ import hipsternet.constant as c
 import hipsternet.regularization as reg
 from hipsternet.im2col import *
 
+def some_forward(X):
+    W = np.full([40, 10], -0.1)
+    for i in range(0, 40):
+        W[i][i//4] = 1
+    return X @ W
+
+def some_backward(dout):
+    W = np.full([40, 10], -0.1)
+    for i in range(0, 40):
+        W[i][i//4] = 1
+    return dout @ W.T
+
 
 def fc_forward(X, W, b):
     out = X @ W + b
@@ -11,12 +23,29 @@ def fc_forward(X, W, b):
     return out, cache
 
 
-def fc_backward(dout, cache):
+def fc_backward(dout, cache, antisymmetric=False):
     W, h = cache
 
     dW = h.T @ dout
+    if antisymmetric and W.shape[0] == W.shape[1]:
+       dW = dW - dW.T
     db = np.sum(dout, axis=0)
     dX = dout @ W.T
+
+    return dX, dW, db
+
+def fcleap_forward(X, W, b):
+    out = X @ np.dot(W.T, W) + b
+    cache = (W, X)
+    return out, cache
+
+
+def fcleap_backward(dout, cache):
+    W, h = cache
+
+    dW = (h@W.T+h@W.T).T @ dout
+    db = np.sum(dout, axis=0)
+    dX = dout @ np.dot(W.T, W).T
 
     return dX, dW, db
 
@@ -31,6 +60,45 @@ def relu_backward(dout, cache):
     dX = dout.copy()
     dX[cache <= 0] = 0
     return dX
+
+def fcrelu_forward(X, W, b):
+    h, cache1 = fc_forward(X, W, b)
+    if (W.shape[0] == W.shape[1]):
+       h = h + X
+    out, cache2 = relu_forward(h)
+    return out, cache1, cache2
+
+# Change order or residual/relu
+def leap_forward(X, prevX, W, b, first):
+    h, cache1 = fcleap_forward(X, W, b)
+    out, cache2 = relu_forward(h)
+    out += 2*X
+    if not first:
+        out -= prevX
+    return out, cache1, cache2
+
+def leap_backward(dout, dprevout, cache1, cache2, first):
+    dX = relu_backward(dout, cache2)
+    dX, dW, db = fcleap_backward(dX, cache1)
+    W, h = cache1
+
+    dX += dout @ (2 * np.identity(W.shape[0]))
+    dX += dprevout
+    if first:
+        dprevX = 0
+    else:
+        dprevX = -dout
+    return dX, dprevX, dW, db
+
+
+def fcrelu_backward(dout, cache1, cache2, antisymmetric=False):
+    dout = relu_backward(dout, cache2)
+
+    dX, dW, db = fc_backward(dout, cache1, antisymmetric)
+    W, h = cache1
+    if W.shape[0] == W.shape[1]:
+       dX += dout @ np.identity(W.shape[0])
+    return dX, dW, db
 
 
 def lrelu_forward(X, a=1e-3):

@@ -2,19 +2,20 @@ import numpy as np
 import hipsternet.input_data as input_data
 import hipsternet.neuralnet as nn
 from hipsternet.solver import *
+import argparse
 import sys
 
 
-n_iter = 1000
-alpha = 1e-3
+n_iter = 15000
+alpha = 1e-4
 mb_size = 64
-n_experiment = 1
+n_experiment = 4
 reg = 1e-5
 print_after = 100
 p_dropout = 0.8
 loss = 'cross_ent'
 nonlin = 'relu'
-solver = 'adam'
+solver = 'sgd'
 
 
 def prepro(X_train, X_val, X_test):
@@ -23,14 +24,32 @@ def prepro(X_train, X_val, X_test):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) > 1:
-        net_type = sys.argv[1]
-        valid_nets = ('ff', 'cnn')
+    valid_nets = ('ff', 'cnn', 'resnet')
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--net', default='ff', choices = valid_nets)
+    parser.add_argument('--opt', default='none', choices = ('none', 'verlet', 'leapfrog', 'antisymmetric'))
+    parser.add_argument('--n_iter', default=n_iter, type=int)
+    parser.add_argument('--solver', default='sgd', choices=('sgd', 'momentum', 'nesterov', 'adagrad', 'rmsprop', 'adam'))
+    parser.add_argument('--num_layers', default=4, type=int)
+    parser.add_argument('--step', default = alpha, type=float)
+    ns = parser.parse_args(sys.argv[1:])
+    net_type = ns.net
+    optimisation = ns.opt
+    n_iter = ns.n_iter
+    solver = ns.solver
+    alpha = ns.step
+        # if net_type not in valid_nets:
+        #     raise Exception('Valid network type are {}'.format(valid_nets))
 
-        if net_type not in valid_nets:
-            raise Exception('Valid network type are {}'.format(valid_nets))
-    else:
-        net_type = 'ff'
+    print('Net: ' + str(net_type))
+    print('Iterations: ' + str(n_iter))
+    print('Step size: ' + str(alpha))    
+    print('Minibatch size: ' + str(mb_size))
+    print('Number of experiments: ' + str(n_experiment))
+    print('Nonlinearity: ' + str(nonlin))
+    print('Solver: ' + str(solver))
+    print('Optimisation: ' + str(optimisation))
+    print('Number of layers: ' + str(ns.num_layers))
 
     mnist = input_data.read_data_sets('data/MNIST_data/', one_hot=False)
     X_train, y_train = mnist.train.images, mnist.train.labels
@@ -71,6 +90,8 @@ if __name__ == '__main__':
             net = nn.FeedForwardNet(D, C, H=128, lam=reg, p_dropout=p_dropout, loss=loss, nonlin=nonlin)
         elif net_type == 'cnn':
             net = nn.ConvNet(10, C, H=128)
+        elif net_type == 'resnet':
+            net = nn.ResNet(D, C, H=256, lam=reg, p_dropout=p_dropout, loss=loss, nonlin=nonlin, optimisation=optimisation, num_layers=ns.num_layers)
 
         net = solver_fun(
             net, X_train, y_train, val_set=(X_val, y_val), mb_size=mb_size, alpha=alpha,
