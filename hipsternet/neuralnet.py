@@ -226,7 +226,7 @@ class ResNet(NeuralNet):
                 dh, dprevH, dW, db = l.leap_backward(dh, dprevH, cache['h_cache'+str(i)], cache['nl_cache'+str(i)], i == 2)
             else:
                 dh, dW, db = l.fcrelu_backward(dh, cache['h_cache'+str(i)], cache['nl_cache'+str(i)], self.antisymmetric)
-            grad['W' + str(i)] = dW #+ reg.dl2_reg(self.model['W' + str(i)], self.lam)
+            grad['W' + str(i)] = dW + reg.dl2_reg(self.model['W' + str(i)], self.lam)
             grad['b' + str(i)] = db
         # grad['W1'] = 0
         # grad['b1'] = 0
