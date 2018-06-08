@@ -69,16 +69,18 @@ def fcrelu_forward(X, W, b):
     return out, cache1, cache2
 
 # Change order or residual/relu
-def leap_forward(X, prevX, W, b, first):
+def leap_forward(X, prevX, W, b, hypo, first):
     h, cache1 = fcleap_forward(X, W, b)
     out, cache2 = relu_forward(h)
+    out *= hypo**2
     out += 2*X
     if not first:
         out -= prevX
     return out, cache1, cache2
 
-def leap_backward(dout, dprevout, cache1, cache2, first):
+def leap_backward(dout, dprevout, cache1, cache2, hypo, first):
     dX = relu_backward(dout, cache2)
+    dX /= hypo**2
     dX, dW, db = fcleap_backward(dX, cache1)
     W, h = cache1
 

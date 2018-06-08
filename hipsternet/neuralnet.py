@@ -188,6 +188,7 @@ class ResNet(NeuralNet):
         self.num_layers = num_layers
         self.antisymmetric = optimisation == 'antisymmetric'
         self.leapfrog = optimisation == 'leapfrog'
+        self.hypo = 0.1
         super().__init__(D, C, H, lam, p_dropout, loss, nonlin)
 
     def forward(self, X, iter, train=False):
@@ -198,8 +199,7 @@ class ResNet(NeuralNet):
             temp = h
             if self.leapfrog and i != 1:
                 h, cache['h_cache'+str(i)], cache['nl_cache'+str(i)] = \
-                    l.leap_forward(h, prev, self.model['W'+str(i)], self.model['b'+str(i)], i == 2)
-                # print(h)
+                    l.leap_forward(h, prev, self.model['W'+str(i)], self.model['b'+str(i)], self.hypo, i == 2)
             else:
                 h, cache['h_cache'+str(i)], cache['nl_cache'+str(i)] = \
                     l.fcrelu_forward(h, self.model['W'+str(i)], self.model['b'+str(i)])
@@ -223,7 +223,7 @@ class ResNet(NeuralNet):
         dprevH = 0
         for i in range(num_layers-1, 0, -1):
             if self.leapfrog and i > 1:
-                dh, dprevH, dW, db = l.leap_backward(dh, dprevH, cache['h_cache'+str(i)], cache['nl_cache'+str(i)], i == 2)
+                dh, dprevH, dW, db = l.leap_backward(dh, dprevH, cache['h_cache'+str(i)], cache['nl_cache'+str(i)], self.hypo, i == 2)
             else:
                 dh, dW, db = l.fcrelu_backward(dh, cache['h_cache'+str(i)], cache['nl_cache'+str(i)], self.antisymmetric)
             grad['W' + str(i)] = dW + reg.dl2_reg(self.model['W' + str(i)], self.lam)
