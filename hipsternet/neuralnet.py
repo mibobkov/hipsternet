@@ -188,7 +188,7 @@ class ResNet(NeuralNet):
         self.num_layers = num_layers
         self.antisymmetric = optimisation == 'antisymmetric'
         self.leapfrog = optimisation == 'leapfrog'
-        self.hypo = 1
+        self.hypo = 0.1
         super().__init__(D, C, H, lam, p_dropout, loss, nonlin)
 
     def forward(self, X, iter, train=False):

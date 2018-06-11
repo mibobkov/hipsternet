@@ -63,10 +63,10 @@ def relu_backward(dout, cache):
 
 def fcrelu_forward(X, W, b, hypo=1):
     h, cache1 = fc_forward(X, W, b)
-    if (W.shape[0] == W.shape[1]):
-       h = h + X
     out, cache2 = relu_forward(h)
-    out*=hypo
+    if (W.shape[0] == W.shape[1]):
+        out *= hypo
+        out = out + X
     return out, cache1, cache2
 
 # Change order or residual/relu
@@ -81,7 +81,7 @@ def leap_forward(X, prevX, W, b, hypo, first):
 
 def leap_backward(dout, dprevout, cache1, cache2, hypo, first):
     dX = relu_backward(dout, cache2)
-    dX /= hypo**2
+    dX *= hypo**2
     dX, dW, db = fcleap_backward(dX, cache1)
     W, h = cache1
 
@@ -95,11 +95,13 @@ def leap_backward(dout, dprevout, cache1, cache2, hypo, first):
 
 
 def fcrelu_backward(dout, cache1, cache2, hypo=1, antisymmetric=False):
-    dout /= hypo
-    dout = relu_backward(dout, cache2)
-
-    dX, dW, db = fc_backward(dout, cache1, antisymmetric)
     W, h = cache1
+    if W.shape[0] == W.shape[1]:
+        dX = dout * hypo
+    else:
+        dX = dout
+    dX = relu_backward(dX, cache2)
+    dX, dW, db = fc_backward(dX, cache1, antisymmetric)
     if W.shape[0] == W.shape[1]:
        dX += dout @ np.identity(W.shape[0])
     return dX, dW, db

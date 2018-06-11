@@ -33,7 +33,7 @@ def plotDataFor(ax, filename, notation):
     parts = getExperimentsData(filename)
     for i in range(0, len(parts)):
         Xs, Ys = getValues(parts, i)
-        ax.plot(Xs, Ys, color=notation)
+        ax.plot(Xs, Ys, color=notation, label= filename if i == 0 else None)
 
 if len(sys.argv) == 1:
     print('Provide log names to plot')
@@ -56,5 +56,6 @@ while not exit:
     for name in names:
         plotDataFor(ax, name, colors[i])
         i += 1
+    ax.legend()
     plt.draw()
     plt.pause(4)
