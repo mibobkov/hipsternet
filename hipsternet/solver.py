@@ -35,7 +35,8 @@ def sgd(nn, X_train, y_train, val_set=None, alpha=1e-3, mb_size=256, n_iter=2000
         if iter % print_after == 0:
             if val_set:
                 val_acc = util.accuracy(y_val, nn.predict(X_val))
-                print('Iter-{} loss: {:.4f} validation: {:4f}'.format(iter, loss, val_acc))
+                test_acc = util.accuracy(y_mini, nn.predict(X_mini))
+                print('Iter-{} loss: {:.4f} test: {:4d} validation: {:4f}'.format(iter, loss, test_acc, val_acc))
             else:
                 print('Iter-{} loss: {:.4f}'.format(iter, loss))
 
@@ -117,7 +118,7 @@ def adagrad(nn, X_train, y_train, val_set=None, alpha=1e-3, mb_size=256, n_iter=
         idx = np.random.randint(0, len(minibatches))
         X_mini, y_mini = minibatches[idx]
 
-        grad, loss = nn.train_step(X_mini, y_mini)
+        grad, loss = nn.train_step(X_mini, y_mini, iter)
 
         if iter % print_after == 0:
             if val_set:
@@ -183,7 +184,8 @@ def adam(nn, X_train, y_train, val_set=None, alpha=0.001, mb_size=256, n_iter=20
         if iter % print_after == 0:
             if val_set:
                 val_acc = util.accuracy(y_val, nn.predict(X_val))
-                print('Iter-{} loss: {:.4f} validation: {:4f}'.format(iter, loss, val_acc))
+                val_acc = util.accuracy(y_val, nn.predict(X_val))
+                print('Iter-{} loss: {:.4f} test: {:4f} validation: {:4f}'.format(iter, loss, test_acc, val_acc))
             else:
                 print('Iter-{} loss: {:.4f}'.format(iter, loss))
 
