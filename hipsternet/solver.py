@@ -58,7 +58,7 @@ def momentum(nn, X_train, y_train, val_set=None, alpha=1e-3, mb_size=256, n_iter
         idx = np.random.randint(0, len(minibatches))
         X_mini, y_mini = minibatches[idx]
 
-        grad, loss = nn.train_step(X_mini, y_mini)
+        grad, loss = nn.train_step(X_mini, y_mini, iter)
 
         if iter % print_after == 0:
             if val_set:
@@ -89,7 +89,7 @@ def nesterov(nn, X_train, y_train, val_set=None, alpha=1e-3, mb_size=256, n_iter
 
         nn_ahead = copy.deepcopy(nn)
         nn_ahead.model.update({k: v + gamma * velocity[k] for k, v in nn.model.items()})
-        grad, loss = nn_ahead.train_step(X_mini, y_mini)
+        grad, loss = nn_ahead.train_step(X_mini, y_mini, iter)
 
         if iter % print_after == 0:
             if val_set:
