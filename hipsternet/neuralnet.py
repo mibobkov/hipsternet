@@ -70,6 +70,9 @@ class NeuralNet(object):
         score, _ = self.forward(X, False)
         return util.softmax(score)
 
+    def doubleLayers(self):
+        raise NotImplementedError()
+
     def predict(self, X):
         if self.mode == 'classification':
             return np.argmax(self.predict_proba(X), axis=1)
@@ -191,13 +194,34 @@ class ResNet(NeuralNet):
         self.hypo = 1
         super().__init__(D, C, H, lam, p_dropout, loss, nonlin)
 
+    def doubleLayers(self):
+        self.num_layers *= 2
+        self.hypo /= 2
+        for i in reversed(range(1, self.num_layers//2)):
+            i = i+1
+            newWeights = dict()
+            Wstart = self.model['W' + str(i-1)]
+            Wend = self.model['W' + str(i)]
+            Wmid = (Wstart+Wend)/2
+            bstart = self.model['b' + str(i-1)]
+            bend = self.model['b' + str(i)]
+            bmid = (bstart+bend)/2
+            self.setLayer(i*2, Wend, bend)
+            self.setLayer(i*2-1, Wmid, bmid)
+        self.setLayer(2, self.model['W1'], self.model['b1'])
+        self.setLayer(1, self.model['W1'], self.model['b1'])
+
     def forward(self, X, iter, train=False):
+        if iter != 0 and iter % 200 == 0 and iter < 800:
+            self.doubleLayers()
         cache = dict(X=X)
         h = X
         prev = 0
-        for i in range(1, self.num_layers):
+        h, cache['h_caches'], cache['nl_caches'] = \
+            l.fcrelu_forward(h, self.model['Ws'], self.model['bs'], hypo=self.hypo)
+        for i in range(1, self.num_layers+1):
             temp = h
-            if self.leapfrog and i != 1:
+            if self.leapfrog:
                 h, cache['h_cache'+str(i)], cache['nl_cache'+str(i)] = \
                     l.leap_forward(h, prev, self.model['W'+str(i)], self.model['b'+str(i)], self.hypo, i == 2)
             else:
@@ -205,7 +229,7 @@ class ResNet(NeuralNet):
                     l.fcrelu_forward(h, self.model['W'+str(i)], self.model['b'+str(i)], hypo=self.hypo)
             prev = temp
                 
-        score, cache['score_cache'] = l.fc_forward(h, self.model['W'+str(self.num_layers)], self.model['b'+str(self.num_layers)])
+        score, cache['score_cache'] = l.fc_forward(h, self.model['Wf'], self.model['bf'])
 
         return score, cache
 
@@ -217,36 +241,43 @@ class ResNet(NeuralNet):
         # Fourth layer
         dh, dW, db = l.fc_backward(grad_y, cache['score_cache'])
         grad = dict()
-        grad['W' + str(num_layers)] = dW
-        grad['b' + str(num_layers)] = db
+        grad['Wf'] = dW
+        grad['bf'] = db
 
         dprevH = 0
-        for i in range(num_layers-1, 0, -1):
-            if self.leapfrog and i > 1:
+        for i in range(num_layers, 0, -1):
+            if self.leapfrog:
                 dh, dprevH, dW, db = l.leap_backward(dh, dprevH, cache['h_cache'+str(i)], cache['nl_cache'+str(i)], self.hypo, i == 2)
             else:
                 dh, dW, db = l.fcrelu_backward(dh, cache['h_cache'+str(i)], cache['nl_cache'+str(i)], antisymmetric=self.antisymmetric, hypo=self.hypo)
             grad['W' + str(i)] = dW + reg.dl2_reg(self.model['W' + str(i)], self.lam)
             grad['b' + str(i)] = db
-        # grad['W1'] = 0
-        # grad['b1'] = 0
+        dh, dW, db = l.fcrelu_backward(dh, cache['h_caches'], cache['nl_caches'], antisymmetric=self.antisymmetric, hypo=self.hypo)
+        grad['Ws'] = dW
+        grad['bs'] = db
 
         return grad
+
+
+    def setLayer(self, i, W, b):
+        self.model['W'+str(i)] = W
+        self.model['b'+str(i)] = b
+
 
     def _init_model(self, D, C, H):
         num_layers = self.num_layers
         self.model = dict(
-            W1=np.random.randn(D, H) / np.sqrt(D / 2.),
-            b1=np.zeros((1, H)),
+            Ws=np.random.randn(D, H) / np.sqrt(D / 2.),
+            bs=np.zeros((1, H)),
         )
-        for i in range(2, num_layers):
+        for i in range(1, num_layers+1):
             W = np.random.randn(H, H) / np.sqrt(H/2) / H
             if self.antisymmetric:
                 W = (W-W.T)/2
             self.model['W' + str(i)] = W
             self.model['b' + str(i)] = np.zeros((1, H))
-        self.model['W' + str(num_layers)] = np.random.randn(H, C) / np.sqrt(H / 2.)
-        self.model['b' + str(num_layers)] = np.zeros((1, C))
+        self.model['Wf'] = np.random.randn(H, C) / np.sqrt(H / 2.)
+        self.model['bf'] = np.zeros((1, C))
 
     """
     def __init__(self, D, C, H, lam=1e-3, p_dropout=.8, loss='cross_ent', nonlin='relu'):
