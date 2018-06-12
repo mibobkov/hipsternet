@@ -96,7 +96,7 @@ class FeedForwardNet(NeuralNet):
     def __init__(self, D, C, H, lam=1e-3, p_dropout=.8, loss='cross_ent', nonlin='relu'):
         super().__init__(D, C, H, lam, p_dropout, loss, nonlin)
 
-    def forward(self, X, train=False):
+    def forward(self, X, iter, train=False):
         self.done = True
         gamma1, gamma2 = self.model['gamma1'], self.model['gamma2']
         beta1, beta2 = self.model['beta1'], self.model['beta2']
@@ -105,9 +105,7 @@ class FeedForwardNet(NeuralNet):
         bn1_cache, bn2_cache = None, None
 
         # First layer
-        h1, h1_cache = l.fc_forward(X, self.model['W1'], self.model['b1'])
-        bn1_cache = (self.bn_caches['bn1_mean'], self.bn_caches['bn1_var'])
-        h1, bn1_cache, run_mean, run_var = l.bn_forward(h1, gamma1, beta1, bn1_cache, train=train)
+        h1, h1_cache =  l.conv_forward(X, self.model['W1'], self.model['b1'])
         h1, nl_cache1 = self.forward_nonlin(h1)
 
         self.bn_caches['bn1_mean'], self.bn_caches['bn1_var'] = run_mean, run_var
@@ -125,15 +123,14 @@ class FeedForwardNet(NeuralNet):
 
         if train:
             h2, u2 = l.dropout_forward(h2, self.p_dropout)
-
-        # Third layer
+# Third layer
         score, score_cache = l.fc_forward(h2, self.model['W3'], self.model['b3'])
 
         cache = (X, h1_cache, h2_cache, score_cache, nl_cache1, nl_cache2, u1, u2, bn1_cache, bn2_cache)
 
         return score, cache
 
-    def backward(self, y_pred, y_train, cache):
+    def backward(self, y_pred, y_train, cache, iter):
         X, h1_cache, h2_cache, score_cache, nl_cache1, nl_cache2, u1, u2, bn1_cache, bn2_cache = cache
 
         # Output layer
@@ -166,10 +163,10 @@ class FeedForwardNet(NeuralNet):
 
     def _init_model(self, D, C, H):
         self.model = dict(
-            W1=np.random.randn(D, H) / np.sqrt(D / 2.),
-            W2=np.random.randn(H, H) / np.sqrt(H / 2.),
+            W1=np.random.randn(1, 1, 3, 3) / np.sqrt(3 / 2.),
+            W2=np.random.randn(D, H) / np.sqrt(H / 2.),
             W3=np.random.randn(H, C) / np.sqrt(H / 2.),
-            b1=np.zeros((1, H)),
+            b1=np.zeros((1, 1)),
             b2=np.zeros((1, H)),
             b3=np.zeros((1, C)),
             gamma1=np.ones((1, H)),
@@ -212,18 +209,19 @@ class ResNet(NeuralNet):
         self.setLayer(1, self.model['W1'], self.model['b1'])
 
     def forward(self, X, iter, train=False):
-        if iter != 0 and iter % 2000 == 0 and iter < 8000:
-            self.doubleLayers()
+        #if iter != 0 and iter % 2000 == 0 and iter < 16000:
+        #    self.doubleLayers()
         cache = dict(X=X)
         h = X
         prev = 0
+        #h, cache['c_cache'] = l.conv_forward(h, self.model['Wc'], self.model['bc'])
         h, cache['h_caches'], cache['nl_caches'] = \
             l.fcrelu_forward(h, self.model['Ws'], self.model['bs'], hypo=self.hypo)
         for i in range(1, self.num_layers+1):
             temp = h
             if self.leapfrog:
                 h, cache['h_cache'+str(i)], cache['nl_cache'+str(i)] = \
-                    l.leap_forward(h, prev, self.model['W'+str(i)], self.model['b'+str(i)], self.hypo, i == 2)
+                    l.leap_forward(h, prev, self.model['W'+str(i)], self.model['b'+str(i)], self.hypo, i == 1)
             else:
                 h, cache['h_cache'+str(i)], cache['nl_cache'+str(i)] = \
                     l.fcrelu_forward(h, self.model['W'+str(i)], self.model['b'+str(i)], hypo=self.hypo)
@@ -247,7 +245,7 @@ class ResNet(NeuralNet):
         dprevH = 0
         for i in range(num_layers, 0, -1):
             if self.leapfrog:
-                dh, dprevH, dW, db = l.leap_backward(dh, dprevH, cache['h_cache'+str(i)], cache['nl_cache'+str(i)], self.hypo, i == 2)
+                dh, dprevH, dW, db = l.leap_backward(dh, dprevH, cache['h_cache'+str(i)], cache['nl_cache'+str(i)], i==num_layers, self.hypo)
             else:
                 dh, dW, db = l.fcrelu_backward(dh, cache['h_cache'+str(i)], cache['nl_cache'+str(i)], antisymmetric=self.antisymmetric, hypo=self.hypo)
             grad['W' + str(i)] = dW + reg.dl2_reg(self.model['W' + str(i)], self.lam)
@@ -255,6 +253,14 @@ class ResNet(NeuralNet):
         dh, dW, db = l.fcrelu_backward(dh, cache['h_caches'], cache['nl_caches'], antisymmetric=self.antisymmetric, hypo=self.hypo)
         grad['Ws'] = dW
         grad['bs'] = db
+        #dh, dW, db = l.conv_backward(dh, cache['c_cache'])
+        #grad['Wc'] = dW
+        #grad['bs'] = db
+        if iter > 100000:
+            grad['Wf'] = 0
+            grad['bf'] = 0
+            grad['Ws'] = 0
+            grad['bs'] = 0
 
         return grad
 
@@ -267,6 +273,8 @@ class ResNet(NeuralNet):
     def _init_model(self, D, C, H):
         num_layers = self.num_layers
         self.model = dict(
+            Wc=np.random.randn(1, 1, 3, 3) / np.sqrt(1/2),
+            bc=np.zeros((1, 1)),
             Ws=np.random.randn(D, H) / np.sqrt(D / 2.),
             bs=np.zeros((1, H)),
         )
@@ -361,14 +369,14 @@ class ResNet(NeuralNet):
             bn1_mean=np.zeros((1, D*28*28)),
             bn1_var=np.zeros((1, D*28*28)),
         )
-        """
+"""
 
 class ConvNet(NeuralNet):
 
     def __init__(self, D, C, H, lam=1e-3, p_dropout=.8, loss='cross_ent', nonlin='relu'):
         super().__init__(D, C, H, lam, p_dropout, loss, nonlin)
 
-    def forward(self, X, train=False):
+    def forward(self, X, iter, train=False):
         # Conv-1
         h1, h1_cache = l.conv_forward(X, self.model['W1'], self.model['b1'])
         h1, nl_cache1 = l.relu_forward(h1)
@@ -386,7 +394,7 @@ class ConvNet(NeuralNet):
 
         return score, (X, h1_cache, h3_cache, score_cache, hpool_cache, hpool, nl_cache1, nl_cache3)
 
-    def backward(self, y_pred, y_train, cache):
+    def backward(self, y_pred, y_train, cache, iter):
         X, h1_cache, h3_cache, score_cache, hpool_cache, hpool, nl_cache1, nl_cache3 = cache
 
         # Output layer

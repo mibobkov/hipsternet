@@ -24,22 +24,30 @@ def getExperimentsData(filename):
         parts.append(text[start:end-1])
     return parts
     
-def getValues(parts, i):
-    Xs = re.findall('Iter-(\d*)', parts[i])
+def getValues(parts, timing, i):
+    if timing:
+        Xs = re.findall('time: (\d*.\d*)', parts[i])
+    else:
+        Xs = re.findall('Iter-(\d*)', parts[i])
     Ys = re.findall('validation: (\d*.\d*)', parts[i])
-    return np.array(Xs, dtype=int), np.array(Ys, dtype=float)
+    return np.array(Xs, dtype=float), np.array(Ys, dtype=float)
 
-def plotDataFor(ax, filename, notation):
+def plotDataFor(ax, filename, timing, notation):
     parts = getExperimentsData(filename)
     for i in range(0, len(parts)):
-        Xs, Ys = getValues(parts, i)
+        Xs, Ys = getValues(parts, timing, i)
         ax.plot(Xs, Ys, color=notation, label= filename if i == 0 else None)
 
+timing = False
 if len(sys.argv) == 1:
     print('Provide log names to plot')
     exit(0)
 else:
-    names = sys.argv[1:]
+    if (sys.argv[1] == 't'):
+        timing = True
+        names = sys.argv[2:]
+    else:
+        names = sys.argv[1:]
 
 
 plt.ion()
@@ -54,7 +62,7 @@ while not exit:
     ax.cla()
     i = 0
     for name in names:
-        plotDataFor(ax, name, colors[i])
+        plotDataFor(ax, name, timing, colors[i])
         i += 1
     ax.legend()
     plt.draw()

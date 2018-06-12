@@ -8,7 +8,7 @@ import sys
 
 n_iter = 15000
 alpha = 1e-4
-mb_size = 64
+mb_size = 128
 n_experiment = 4
 reg = 1e-5
 print_after = 100

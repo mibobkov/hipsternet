@@ -80,17 +80,14 @@ def leap_forward(X, prevX, W, b, hypo, first):
     return out, cache1, cache2
 
 def leap_backward(dout, dprevout, cache1, cache2, hypo, first):
-    dX = relu_backward(dout, cache2)
-    dX *= hypo**2
+    dX = dout * (hypo**2)
+    dX = relu_backward(dX, cache2)
     dX, dW, db = fcleap_backward(dX, cache1)
     W, h = cache1
 
     dX += dout @ (2 * np.identity(W.shape[0]))
     dX += dprevout
-    if first:
-        dprevX = 0
-    else:
-        dprevX = -dout
+    dprevX = -dout
     return dX, dprevX, dW, db
 
 
@@ -99,7 +96,7 @@ def fcrelu_backward(dout, cache1, cache2, hypo=1, antisymmetric=False):
     if W.shape[0] == W.shape[1]:
         dX = dout * hypo
     else:
-        dX = dout
+        dX = dout.copy()
     dX = relu_backward(dX, cache2)
     dX, dW, db = fc_backward(dX, cache1, antisymmetric)
     if W.shape[0] == W.shape[1]:
@@ -195,6 +192,7 @@ def bn_backward(dout, cache):
 
 
 def conv_forward(X, W, b, stride=1, padding=1):
+    X = X.reshape(X.shape[0], 1, 28, 28)
     cache = W, b, stride, padding
     n_filters, d_filter, h_filter, w_filter = W.shape
     n_x, d_x, h_x, w_x = X.shape
@@ -208,17 +206,22 @@ def conv_forward(X, W, b, stride=1, padding=1):
 
     X_col = im2col_indices(X, h_filter, w_filter, padding=padding, stride=stride)
     W_col = W.reshape(n_filters, -1)
+    #print(W.shape)
+    #print(h_filter)
+    #print(w_filter)
 
     out = W_col @ X_col + b
     out = out.reshape(n_filters, h_out, w_out, n_x)
     out = out.transpose(3, 0, 1, 2)
 
     cache = (X, W, b, stride, padding, X_col)
+    out = out.reshape(X.shape[0], -1)
 
     return out, cache
 
 
 def conv_backward(dout, cache):
+    dout = dout.reshape(dout.shape[0],1, 28, 28)
     X, W, b, stride, padding, X_col = cache
     n_filter, d_filter, h_filter, w_filter = W.shape
 

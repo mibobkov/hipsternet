@@ -2,6 +2,7 @@ import numpy as np
 import hipsternet.utils as util
 import hipsternet.constant as c
 import copy
+import time
 from sklearn.utils import shuffle as skshuffle
 
 
@@ -26,6 +27,7 @@ def sgd(nn, X_train, y_train, val_set=None, alpha=1e-3, mb_size=256, n_iter=2000
     if val_set:
         X_val, y_val = val_set
 
+    start = time.time()
     for iter in range(1, n_iter + 1):
         idx = np.random.randint(0, len(minibatches))
         X_mini, y_mini = minibatches[idx]
@@ -34,14 +36,16 @@ def sgd(nn, X_train, y_train, val_set=None, alpha=1e-3, mb_size=256, n_iter=2000
 
         if iter % print_after == 0:
             if val_set:
+                end = time.time()
                 val_acc = util.accuracy(y_val, nn.predict(X_val))
                 test_acc = util.accuracy(y_mini, nn.predict(X_mini))
-                print('Iter-{} loss: {:.4f} test: {:4f} validation: {:4f}'.format(iter, loss, test_acc, val_acc))
+                print('Iter-{} loss: {:.4f} test: {:4f} time: {:4f} validation: {:4f}'.format(iter, loss, test_acc, end-start, val_acc))
             else:
                 print('Iter-{} loss: {:.4f}'.format(iter, loss))
 
         for layer in grad:
             nn.model[layer] -= alpha * grad[layer]
+       
 
     return nn
 
@@ -184,7 +188,7 @@ def adam(nn, X_train, y_train, val_set=None, alpha=0.001, mb_size=256, n_iter=20
         if iter % print_after == 0:
             if val_set:
                 val_acc = util.accuracy(y_val, nn.predict(X_val))
-                val_acc = util.accuracy(y_val, nn.predict(X_val))
+                test_acc = util.accuracy(y_mini, nn.predict(X_mini))
                 print('Iter-{} loss: {:.4f} test: {:4f} validation: {:4f}'.format(iter, loss, test_acc, val_acc))
             else:
                 print('Iter-{} loss: {:.4f}'.format(iter, loss))
