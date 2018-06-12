@@ -18,9 +18,16 @@ nonlin = 'relu'
 solver = 'sgd'
 
 
+
 def prepro(X_train, X_val, X_test):
     mean = np.mean(X_train)
     return X_train - mean, X_val - mean, X_test - mean
+
+def unpickle(file):
+    import pickle
+    with open(file, 'rb') as fo:
+        dict = pickle.load(fo, encoding='latin')
+    return dict
 
 
 if __name__ == '__main__':
@@ -52,10 +59,23 @@ if __name__ == '__main__':
     print('Optimisation: ' + str(optimisation))
     print('Number of layers: ' + str(ns.num_layers))
 
-    mnist = input_data.read_data_sets('data/MNIST_data/', one_hot=False)
-    X_train, y_train = mnist.train.images, mnist.train.labels
-    X_val, y_val = mnist.validation.images, mnist.validation.labels
-    X_test, y_test = mnist.test.images, mnist.test.labels
+    ciphar = unpickle("cifar-10-batches-py/data_batch_1")
+    X_train, y_train = ciphar['data'][0:6000], ciphar['labels'][0:6000]
+    X_val, y_val = ciphar['data'][6000:8000], ciphar['labels'][6000:8000]
+    X_test, y_test = ciphar['data'][6000:8000], ciphar['labels'][6000:8000]
+    X_train.reshape(X_train.shape[0], 3, 32, 32)
+    X_val.reshape(X_val.shape[0], 3, 32, 32)
+    X_test.reshape(X_test.shape[0], 3, 32, 32)
+    X_train, y_train = np.array(X_train), np.array(y_train)
+    X_val, y_val = np.array(X_val), np.array(y_val)
+    X_test, y_test = np.array(X_test), np.array(y_test)
+
+
+
+    # mnist = input_data.read_data_sets('data/MNIST_data/', one_hot=False)
+    # X_train, y_train = mnist.train.images, mnist.train.labels
+    # X_val, y_val = mnist.validation.images, mnist.validation.labels
+    # X_test, y_test = mnist.test.images, mnist.test.labels
 
     M, D, C = X_train.shape[0], X_train.shape[1], y_train.max() + 1
 
