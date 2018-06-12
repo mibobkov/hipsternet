@@ -212,7 +212,7 @@ class ResNet(NeuralNet):
         self.setLayer(1, self.model['W1'], self.model['b1'])
 
     def forward(self, X, iter, train=False):
-        if iter != 0 and iter % 200 == 0 and iter < 800:
+        if iter != 0 and iter % 2000 == 0 and iter < 8000:
             self.doubleLayers()
         cache = dict(X=X)
         h = X

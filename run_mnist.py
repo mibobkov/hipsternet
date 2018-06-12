@@ -32,6 +32,7 @@ if __name__ == '__main__':
     parser.add_argument('--solver', default='sgd', choices=('sgd', 'momentum', 'nesterov', 'adagrad', 'rmsprop', 'adam'))
     parser.add_argument('--num_layers', default=4, type=int)
     parser.add_argument('--step', default = alpha, type=float)
+    parser.add_argument('--H', default=256, type=int)
     ns = parser.parse_args(sys.argv[1:])
     net_type = ns.net
     optimisation = ns.opt
@@ -91,7 +92,7 @@ if __name__ == '__main__':
         elif net_type == 'cnn':
             net = nn.ConvNet(10, C, H=128)
         elif net_type == 'resnet':
-            net = nn.ResNet(D, C, H=256, lam=reg, p_dropout=p_dropout, loss=loss, nonlin=nonlin, optimisation=optimisation, num_layers=ns.num_layers)
+            net = nn.ResNet(D, C, H=ns.H, lam=reg, p_dropout=p_dropout, loss=loss, nonlin=nonlin, optimisation=optimisation, num_layers=ns.num_layers)
 
         net = solver_fun(
             net, X_train, y_train, val_set=(X_val, y_val), mb_size=mb_size, alpha=alpha,
