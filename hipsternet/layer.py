@@ -71,7 +71,7 @@ def fcrelu_forward(X, W, b, hypo=1):
 
 # Change order or residual/relu
 def leap_forward(X, prevX, W, b, hypo, first):
-    h, cache1 = fcleap_forward(X, W, b)
+    h, cache1 = fc_forward(X, W, b)
     out, cache2 = relu_forward(h)
     out *= hypo**2
     out += 2*X
@@ -82,7 +82,7 @@ def leap_forward(X, prevX, W, b, hypo, first):
 def leap_backward(dout, dprevout, cache1, cache2, hypo, first):
     dX = dout * (hypo**2)
     dX = relu_backward(dX, cache2)
-    dX, dW, db = fcleap_backward(dX, cache1)
+    dX, dW, db = fc_backward(dX, cache1)
     W, h = cache1
 
     dX += dout @ (2 * np.identity(W.shape[0]))

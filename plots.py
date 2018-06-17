@@ -6,6 +6,8 @@ from matplotlib.axes import Axes
 import time 
 import sys
 import matplotlib.cm as cm
+import os
+from os import listdir
 
 
 def getExperimentsData(filename):
@@ -48,6 +50,9 @@ else:
         names = sys.argv[2:]
     else:
         names = sys.argv[1:]
+
+if os.path.isdir('logs/'+ names[0]): 
+    names = [names[0]+'/' + s for s in listdir('logs/'+names[0])]
 
 
 plt.ion()
