@@ -7,19 +7,19 @@ import sys
 
 
 n_iter = 10000
-alpha = 1e-4
+alpha = 0.01
 mb_size = 128
 n_experiment = 1
 reg = 1e-4
 print_after = 100
-p_dropout = 0.9
+p_dropout = 0.6
 loss = 'cross_ent'
 nonlin = 'relu'
 solver = 'sgd'
 weights_fixed = False
-multilevel = True
+multilevel = False
 multi_step = 1000
-multi_times = 6
+multi_times = 3
 cifarset=False
 
 
@@ -62,7 +62,7 @@ if __name__ == '__main__':
     parser.add_argument('--solver', default='sgd', choices=('sgd', 'momentum', 'nesterov', 'adagrad', 'rmsprop', 'adam'))
     parser.add_argument('--num_layers', default=4, type=int)
     parser.add_argument('--step', default = alpha, type=float)
-    parser.add_argument('--H', default=256, type=int)
+    parser.add_argument('--H', default=512, type=int)
     ns = parser.parse_args(sys.argv[1:])
     net_type = ns.net
     optimisation = ns.opt

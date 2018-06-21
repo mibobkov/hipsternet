@@ -1,4 +1,6 @@
 import numpy as np
+import time
+from gpumath import fast_matmul
 import hipsternet.utils as util
 import hipsternet.constant as c
 import hipsternet.regularization as reg
@@ -192,7 +194,8 @@ def bn_backward(dout, cache):
 
 
 def conv_forward(X, W, b, stride=1, padding=1):
-    X = X.reshape(X.shape[0], 1, 28, 28)
+    #start = time.time()
+    #X = X.reshape(X.shape[0], 1, 28, 28)
     cache = W, b, stride, padding
     n_filters, d_filter, h_filter, w_filter = W.shape
     n_x, d_x, h_x, w_x = X.shape
@@ -210,32 +213,49 @@ def conv_forward(X, W, b, stride=1, padding=1):
     #print(h_filter)
     #print(w_filter)
 
-    out = W_col @ X_col + b
+    #print(W_col.shape)
+    #print(X_col.shape)
+
+    # Was @ here before, mb that's significant
+    assert len(W_col.shape) == 2 and len(X_col.shape) == 2
+    #print(time.time()-start)
+    C = np.empty([W_col.shape[0], X_col.shape[1]])
+    fast_matmul(W_col, X_col, C)
+    out = C + b
     out = out.reshape(n_filters, h_out, w_out, n_x)
     out = out.transpose(3, 0, 1, 2)
 
     cache = (X, W, b, stride, padding, X_col)
-    out = out.reshape(X.shape[0], -1)
+    #out = out.reshape(X.shape[0], -1)
+    #print('end')
 
     return out, cache
 
 
 def conv_backward(dout, cache):
-    dout = dout.reshape(dout.shape[0],1, 28, 28)
+    #dout = dout.reshape(dout.shape[0],1, 28, 28)
+    start = time.time()
+    
     X, W, b, stride, padding, X_col = cache
     n_filter, d_filter, h_filter, w_filter = W.shape
 
+    #print(time.time()-start)
     db = np.sum(dout, axis=(0, 2, 3))
     db = db.reshape(n_filter, -1)
 
+    #print(time.time()-start)
     dout_reshaped = dout.transpose(1, 2, 3, 0).reshape(n_filter, -1)
     dW = dout_reshaped @ X_col.T
     dW = dW.reshape(W.shape)
+    #print(time.time()-start)
 
     W_reshape = W.reshape(n_filter, -1)
     dX_col = W_reshape.T @ dout_reshaped
+    #print(time.time()-start)
     dX = col2im_indices(dX_col, X.shape, h_filter, w_filter, padding=padding, stride=stride)
 
+    #print(time.time()-start)
+    #print('End')
     return dX, dW, db
 
 

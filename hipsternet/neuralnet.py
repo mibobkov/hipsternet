@@ -1,4 +1,5 @@
 import numpy as np
+import time
 import hipsternet.loss as loss_fun
 import hipsternet.layer as l
 import hipsternet.regularization as reg
@@ -190,7 +191,7 @@ class ResNet(NeuralNet):
         self.num_layers = num_layers
         self.antisymmetric = optimisation == 'antisymmetric'
         self.leapfrog = optimisation == 'leapfrog'
-        self.hypo = 1.0
+        self.hypo = 1.0/8
         self.doDropout = True
         self.multilevel = multilevel
         self.weights_fixed=weights_fixed
@@ -261,7 +262,7 @@ class ResNet(NeuralNet):
                 dh, dprevH, dW, db = l.leap_backward(dh, dprevH, cache['h_cache'+str(i)], cache['nl_cache'+str(i)], i==num_layers, self.hypo)
             else:
                 dh, dW, db = l.fcrelu_backward(dh, cache['h_cache'+str(i)], cache['nl_cache'+str(i)], antisymmetric=self.antisymmetric, hypo=self.hypo)
-            if not self.antisymmetric:
+            if not self.antisymmetric and not self.leapfrog:
                 dW += reg.dl2_reg(self.model['W' + str(i)], self.lam)
             grad['W' + str(i)] = dW 
             grad['b' + str(i)] = db
@@ -396,41 +397,53 @@ class ConvNet(NeuralNet):
 
     def forward(self, X, iter, train=False):
         # Conv-1
+        start = time.time()
         h1, h1_cache = l.conv_forward(X, self.model['W1'], self.model['b1'])
         h1, nl_cache1 = l.relu_forward(h1)
+        #print(time.time()-start)
 
         # Pool-1
         hpool, hpool_cache = l.maxpool_forward(h1)
         h2 = hpool.ravel().reshape(X.shape[0], -1)
+        #print(time.time()-start)
 
         # FC-7
         h3, h3_cache = l.fc_forward(h2, self.model['W2'], self.model['b2'])
         h3, nl_cache3 = l.relu_forward(h3)
+        #print(time.time()-start)
 
         # Softmax
         score, score_cache = l.fc_forward(h3, self.model['W3'], self.model['b3'])
+        #print(time.time()-start)
 
         return score, (X, h1_cache, h3_cache, score_cache, hpool_cache, hpool, nl_cache1, nl_cache3)
 
     def backward(self, y_pred, y_train, cache, iter):
         X, h1_cache, h3_cache, score_cache, hpool_cache, hpool, nl_cache1, nl_cache3 = cache
+        start = time.time()
 
         # Output layer
         grad_y = self.dloss_funs[self.loss](y_pred, y_train)
+        print(time.time()-start)
 
         # FC-7
         dh3, dW3, db3 = l.fc_backward(grad_y, score_cache)
         dh3 = self.backward_nonlin(dh3, nl_cache3)
+        print(time.time()-start)
 
         dh2, dW2, db2 = l.fc_backward(dh3, h3_cache)
         dh2 = dh2.ravel().reshape(hpool.shape)
+        print(time.time()-start)
 
         # Pool-1
         dpool = l.maxpool_backward(dh2, hpool_cache)
+        print(time.time()-start)
 
         # Conv-1
         dh1 = self.backward_nonlin(dpool, nl_cache1)
         dX, dW1, db1 = l.conv_backward(dh1, h1_cache)
+        print(time.time()-start)
+        print('end')
 
         grad = dict(
             W1=dW1, W2=dW2, W3=dW3, b1=db1, b2=db2, b3=db3

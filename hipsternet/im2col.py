@@ -1,4 +1,5 @@
 import numpy as np
+import time
 
 
 def get_im2col_indices(x_shape, field_height, field_width, padding=1, stride=1):
@@ -23,6 +24,7 @@ def get_im2col_indices(x_shape, field_height, field_width, padding=1, stride=1):
 
 
 def im2col_indices(x, field_height, field_width, padding=1, stride=1):
+    start = time.time()
     """ An implementation of im2col based on some fancy indexing """
     # Zero-pad the input
     p = padding
