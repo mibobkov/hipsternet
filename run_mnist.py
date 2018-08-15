@@ -6,7 +6,7 @@ import argparse
 import sys
 
 
-n_iter = 10000
+n_iter = 5000
 alpha = 0.01
 mb_size = 128
 n_experiment = 1
@@ -15,12 +15,12 @@ print_after = 100
 p_dropout = 0.6
 loss = 'cross_ent'
 nonlin = 'relu'
-solver = 'sgd'
+solver = 'adaptive'
 weights_fixed = False
 multilevel = False
 multi_step = 1000
 multi_times = 3
-cifarset=False
+cifarset=True
 
 
 def prepro(X_train, X_val, X_test, cifar=True):
@@ -28,22 +28,6 @@ def prepro(X_train, X_val, X_test, cifar=True):
     if cifar:
        norm = 255
     else:
-       #import scipy.ndimage
-       #kernel = np.array(np.array([[1, 0, -1], [2, 0, -2], [1, 0, -1]]))
-       #X_train_edge = scipy.ndimage.filters.convolve(X_train, kernel)
-       #X_test_edge = scipy.ndimage.filters.convolve(X_test, kernel)
-       #X_val_edge = scipy.ndimage.filters.convolve(X_val, kernel)
-       #X_train = X_train.reshape(X_train.shape[0], 1, -1)
-       #X_test = X_test.reshape(X_test.shape[0], 1, -1)
-       #X_val = X_val.reshape(X_val.shape[0], 1, -1)
-       #X_train_edge = X_train_edge.reshape(X_train.shape)
-       #X_test_edge = X_test_edge.reshape(X_test.shape)
-       #X_val_edge = X_val_edge.reshape(X_val.shape)
-       #print(X_train_edge.shape)
-       #print(X_train.shape)
-       #X_train = np.hstack([X_train, X_train_edge])
-       #X_test = np.hstack([X_test, X_test_edge])
-       #X_val = np.hstack([X_val, X_val_edge])
        norm = 1
     return (X_train - mean)/norm, (X_val - mean)/norm, (X_test - mean)/norm
 
@@ -59,10 +43,10 @@ if __name__ == '__main__':
     parser.add_argument('--net', default='resnet', choices = valid_nets)
     parser.add_argument('--opt', default='none', choices = ('none', 'verlet', 'leapfrog', 'antisymmetric'))
     parser.add_argument('--n_iter', default=n_iter, type=int)
-    parser.add_argument('--solver', default='sgd', choices=('sgd', 'momentum', 'nesterov', 'adagrad', 'rmsprop', 'adam'))
+    parser.add_argument('--solver', default='adaptive', choices=('sgd', 'adaptive', 'interleaving', 'momentum', 'nesterov', 'adagrad', 'rmsprop', 'adam'))
     parser.add_argument('--num_layers', default=4, type=int)
     parser.add_argument('--step', default = alpha, type=float)
-    parser.add_argument('--H', default=512, type=int)
+    parser.add_argument('--H', default=1024, type=int)
     ns = parser.parse_args(sys.argv[1:])
     net_type = ns.net
     optimisation = ns.opt
@@ -110,6 +94,8 @@ if __name__ == '__main__':
         X_test = X_test.reshape(-1, *img_shape)
 
     solvers = dict(
+        interleaving=interleaving,
+        adaptive=adaptive,
         sgd=sgd,
         momentum=momentum,
         nesterov=nesterov,
@@ -134,7 +120,7 @@ if __name__ == '__main__':
         elif net_type == 'cnn':
             net = nn.ConvNet(10, C, H=128)
         elif net_type == 'resnet':
-            net = nn.ResNet(D, C, H=ns.H, lam=reg, p_dropout=p_dropout, loss=loss, nonlin=nonlin, optimisation=optimisation, num_layers=ns.num_layers, weights_fixed=weights_fixed, multilevel=multilevel, multi_step=multi_step, multi_times=multi_times)
+            net = nn.ResNet(D, C, H=ns.H, lam=reg, p_dropout=p_dropout, loss=loss, optimisation=optimisation, num_layers=ns.num_layers, weights_fixed=weights_fixed, multilevel=multilevel, multi_step=multi_step, multi_times=multi_times)
 
 
         net = solver_fun(

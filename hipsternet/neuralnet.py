@@ -46,6 +46,9 @@ class NeuralNet(object):
             raise Exception('Nonlinearity must be in {}!'.format(NeuralNet.forward_nonlins.keys()))
 
         self._init_model(D, C, H)
+        self.D = D
+        self.C = C
+        self.H = H
 
         self.lam = lam
         self.p_dropout = p_dropout
@@ -70,6 +73,9 @@ class NeuralNet(object):
     def predict_proba(self, X):
         score, _ = self.forward(X, False)
         return util.softmax(score)
+
+    def passDataNoClass(self, data):
+        raise NotImplementedError()
 
     def doubleLayers(self):
         raise NotImplementedError()
@@ -185,26 +191,34 @@ class FeedForwardNet(NeuralNet):
             bn2_var=np.zeros((1, H))
         )
 
-# TODO: Do I need to define/add it to somewhere else as well?
 class ResNet(NeuralNet):
     def __init__(self, D, C, H, lam=1e-5, p_dropout=.8, loss='cross_ent', nonlin='relu', optimisation='none', num_layers=4, weights_fixed=False, multilevel=False, multi_step = 400, multi_times=3):
         self.num_layers = num_layers
         self.antisymmetric = optimisation == 'antisymmetric'
         self.leapfrog = optimisation == 'leapfrog'
         self.hypo = 1.0/8
-        self.doDropout = True
+        self.doDropout = False
         self.multilevel = multilevel
         self.weights_fixed=weights_fixed
         self.multi_step=multi_step
         self.multi_times = multi_times
         super().__init__(D, C, H, lam, p_dropout, loss, nonlin)
 
+    def freezeLastLayer(self):
+        self.freezeLastLayer = True
+
+    def freezeClassificationLayer(self):
+        self.freezeClassificationLayer = True
+
+    def passDataNoClass(self, data):
+        score, cache = self.forward(data, 0, False)
+        return cache['finalh']
+
     def doubleLayers(self):
         self.num_layers *= 2
         self.hypo /= 2
         for i in reversed(range(1, self.num_layers//2)):
             i = i+1
-            newWeights = dict()
             Wstart = self.model['W' + str(i-1)]
             Wend = self.model['W' + str(i)]
             Wmid = (Wstart+Wend)/2
@@ -239,7 +253,8 @@ class ResNet(NeuralNet):
                 h, cache['h_cache'+str(i)], cache['nl_cache'+str(i)] = \
                     l.fcrelu_forward(h, self.model['W'+str(i)], self.model['b'+str(i)], hypo=self.hypo)
             prev = temp
-                
+
+        cache['finalh'] = h
         score, cache['score_cache'] = l.fc_forward(h, self.model['Wf'], self.model['bf'])
 
         return score, cache
@@ -274,6 +289,9 @@ class ResNet(NeuralNet):
         #dh, dW, db = l.conv_backward(dh, cache['c_cache'])
         #grad['Wc'] = dW
         #grad['bs'] = db
+        if self.freezeLastLayer or self.freezeClassificationLayer:
+            grad['Wf'] = 0
+            grad['bf'] = 0
         if self.weights_fixed:
             grad['Wf'] = 0
             grad['bf'] = 0
@@ -289,7 +307,7 @@ class ResNet(NeuralNet):
 
 
     def _init_model(self, D, C, H):
-        np.random.seed(1)
+        #np.random.seed(1)
         num_layers = self.num_layers
         self.model = dict(
             Wc=np.random.randn(1, 1, 3, 3) / np.sqrt(1/2),
