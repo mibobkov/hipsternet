@@ -101,7 +101,7 @@ def plot(subdir, timing):
     names = []
     for arg in args:
         parts = arg.split('=')
-        legendnames.append(parts[-1])
+        legendnames.append(parts[-1].split('/')[-1])
         names.append(parts[0])
     plt.ion()
     fig, ax = plt.subplots()
@@ -126,4 +126,4 @@ def plot(subdir, timing):
         plt.draw()
         plt.pause(4)
 
-plot('multilevel', False)
+plot(sys.argv[1], False)

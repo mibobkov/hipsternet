@@ -5,6 +5,7 @@ from utils import *
 from consts import *
 
 def train_net(net, testloader, trainloader, method=None):
+    # print('1')
     net.to(device)
     optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)#, weight_decay=0.005)
     timestr = time.strftime("%Y%m%d-%H%M%S")
@@ -12,6 +13,7 @@ def train_net(net, testloader, trainloader, method=None):
         methodstring =  ''
     else:
         methodstring = str(method)
+    # print('2')
     f= open("logs/" + str(net.num_layers)+methodstring+timestr,"w+", 1)
     print(net.num_layers)
     f.write('Initial number of layers: %d\n' % (net.num_layers))
@@ -20,11 +22,14 @@ def train_net(net, testloader, trainloader, method=None):
     #optimizer = optim.SGD(net.parameters(), lr=0.0001, momentum=0.9)
     totaltime = 0
     i = 0
+    # print('3')
     for epoch in range(40):  # loop over the dataset multiple times
         running_loss = 0.0
         train_correct = 0
         train_total = 0
+        # print('4')
         for j, data in enumerate(trainloader, 0):
+            # print('5')
             start = time.time()
             # get the inputs
             inputs, labels = data
@@ -45,6 +50,7 @@ def train_net(net, testloader, trainloader, method=None):
             # print statistics
             running_loss += loss.item()
             totaltime += time.time()-start
+            # print('6')
             if i % 1000 == 999:    # print every 2000 mini-batches
                 accuracy = getAccuracy(net, testloader)
                 print('E:%d, iter-%5d loss: %.3f, time: %.3f, validation: %.3f %%, train acc.: %.3f %%' %
