@@ -1,0 +1,153 @@
+Net: resnet
+Iterations: 15000
+Step size: 0.0001
+Minibatch size: 64
+Number of experiments: 4
+Nonlinearity: relu
+Solver: adam
+Optimisation: leapfrog
+Number of layers: 4
+Extracting data/MNIST_data/train-images-idx3-ubyte.gz
+Extracting data/MNIST_data/train-labels-idx1-ubyte.gz
+Extracting data/MNIST_data/t10k-images-idx3-ubyte.gz
+Extracting data/MNIST_data/t10k-labels-idx1-ubyte.gz
+
+Experimenting on adam
+
+Experiment-1
+Iter-100 loss: 0.9478 validation: 0.790600
+Iter-200 loss: 0.4917 validation: 0.869600
+Iter-300 loss: 0.5160 validation: 0.894600
+Iter-400 loss: 0.4426 validation: 0.904600
+Iter-500 loss: 0.3946 validation: 0.910400
+Iter-600 loss: 0.1763 validation: 0.920800
+Iter-700 loss: 0.3997 validation: 0.923600
+Iter-800 loss: 0.2300 validation: 0.930000
+Iter-900 loss: 0.4114 validation: 0.930800
+Iter-1000 loss: 0.4519 validation: 0.933600
+Iter-1100 loss: 0.3134 validation: 0.936200
+Iter-1200 loss: 0.1226 validation: 0.939200
+Iter-1300 loss: 0.3115 validation: 0.941400
+Iter-1400 loss: 0.1546 validation: 0.944000
+Iter-1500 loss: 0.2021 validation: 0.944600
+Iter-1600 loss: 0.1551 validation: 0.944400
+Iter-1700 loss: 0.1232 validation: 0.947200
+Iter-1800 loss: 0.1370 validation: 0.948800
+Iter-1900 loss: 0.0968 validation: 0.948400
+Iter-2000 loss: 0.2462 validation: 0.950400
+Iter-2100 loss: 0.1023 validation: 0.954200
+Iter-2200 loss: 0.0750 validation: 0.952400
+Iter-2300 loss: 0.2317 validation: 0.955600
+Iter-2400 loss: 0.2517 validation: 0.954600
+Iter-2500 loss: 0.2110 validation: 0.957000
+Iter-2600 loss: 0.0922 validation: 0.957000
+Iter-2700 loss: 0.1570 validation: 0.958600
+Iter-2800 loss: 0.4059 validation: 0.960200
+Iter-2900 loss: 0.1388 validation: 0.959200
+Iter-3000 loss: 0.1972 validation: 0.960600
+Iter-3100 loss: 0.1898 validation: 0.961800
+Iter-3200 loss: 0.1036 validation: 0.963600
+Iter-3300 loss: 0.0728 validation: 0.964000
+Iter-3400 loss: 0.1574 validation: 0.964000
+Iter-3500 loss: 0.0978 validation: 0.964200
+Iter-3600 loss: 0.0473 validation: 0.967600
+Iter-3700 loss: 0.0503 validation: 0.964200
+Iter-3800 loss: 0.2447 validation: 0.967000
+Iter-3900 loss: 0.1845 validation: 0.967600
+Iter-4000 loss: 0.0365 validation: 0.967000
+Iter-4100 loss: 0.1681 validation: 0.968400
+Iter-4200 loss: 0.0927 validation: 0.967400
+Iter-4300 loss: 0.0504 validation: 0.967800
+Iter-4400 loss: 0.0939 validation: 0.969200
+Iter-4500 loss: 0.0625 validation: 0.969000
+Iter-4600 loss: 0.0361 validation: 0.970600
+Iter-4700 loss: 0.1787 validation: 0.970400
+Iter-4800 loss: 0.0412 validation: 0.970800
+Iter-4900 loss: 0.1925 validation: 0.971200
+Iter-5000 loss: 0.0604 validation: 0.969800
+Iter-5100 loss: 0.0924 validation: 0.970000
+Iter-5200 loss: 0.1703 validation: 0.971400
+Iter-5300 loss: 0.0893 validation: 0.971800
+Iter-5400 loss: 0.0391 validation: 0.970000
+Iter-5500 loss: 0.0489 validation: 0.972200
+Iter-5600 loss: 0.1252 validation: 0.972200
+Iter-5700 loss: 0.0527 validation: 0.970200
+Iter-5800 loss: 0.0830 validation: 0.972800
+Iter-5900 loss: 0.1884 validation: 0.972600
+Iter-6000 loss: 0.1158 validation: 0.973400
+Iter-6100 loss: 0.0277 validation: 0.973400
+Iter-6200 loss: 0.0404 validation: 0.974200
+Iter-6300 loss: 0.1787 validation: 0.973400
+Iter-6400 loss: 0.0572 validation: 0.973600
+Iter-6500 loss: 0.0618 validation: 0.972600
+Iter-6600 loss: 0.0939 validation: 0.974200
+Iter-6700 loss: 0.0512 validation: 0.973800
+Iter-6800 loss: 0.0321 validation: 0.974600
+Iter-6900 loss: 0.0149 validation: 0.972600
+Iter-7000 loss: 0.0186 validation: 0.974800
+Iter-7100 loss: 0.0542 validation: 0.974000
+Iter-7200 loss: 0.0661 validation: 0.975000
+Iter-7300 loss: 0.1474 validation: 0.975600
+Iter-7400 loss: 0.0467 validation: 0.975000
+Iter-7500 loss: 0.0504 validation: 0.972400
+Iter-7600 loss: 0.1167 validation: 0.975800
+Iter-7700 loss: 0.0259 validation: 0.974200
+Iter-7800 loss: 0.0588 validation: 0.973800
+Iter-7900 loss: 0.0275 validation: 0.975800
+Iter-8000 loss: 0.0375 validation: 0.974600
+Iter-8100 loss: 0.0245 validation: 0.974200
+Iter-8200 loss: 0.0349 validation: 0.975800
+Iter-8300 loss: 0.0207 validation: 0.974200
+Iter-8400 loss: 0.0371 validation: 0.975000
+Iter-8500 loss: 0.1190 validation: 0.975800
+Iter-8600 loss: 0.0264 validation: 0.975000
+Iter-8700 loss: 0.0424 validation: 0.975600
+Iter-8800 loss: 0.0511 validation: 0.975600
+Iter-8900 loss: 0.0446 validation: 0.976600
+Iter-9000 loss: 0.0232 validation: 0.976000
+Iter-9100 loss: 0.0543 validation: 0.976600
+Iter-9200 loss: 0.0527 validation: 0.976800
+Iter-9300 loss: 0.0679 validation: 0.976600
+Iter-9400 loss: 0.0463 validation: 0.977200
+Iter-9500 loss: 0.0413 validation: 0.976600
+Iter-9600 loss: 0.0837 validation: 0.977000
+Iter-9700 loss: 0.0535 validation: 0.975600
+Iter-9800 loss: 0.0491 validation: 0.976400
+Iter-9900 loss: 0.0316 validation: 0.976800
+Iter-10000 loss: 0.0233 validation: 0.977200
+Iter-10100 loss: 0.0115 validation: 0.976800
+Iter-10200 loss: 0.0262 validation: 0.977000
+Iter-10300 loss: 0.0242 validation: 0.976400
+Iter-10400 loss: 0.1144 validation: 0.976600
+Iter-10500 loss: 0.0410 validation: 0.977000
+Iter-10600 loss: 0.0640 validation: 0.976600
+Iter-10700 loss: 0.0195 validation: 0.977000
+Iter-10800 loss: 0.0351 validation: 0.978000
+Iter-10900 loss: 0.0329 validation: 0.975800
+Iter-11000 loss: 0.0832 validation: 0.977000
+Iter-11100 loss: 0.0416 validation: 0.977000
+Iter-11200 loss: 0.0341 validation: 0.976400
+Iter-11300 loss: 0.0318 validation: 0.976400
+Iter-11400 loss: 0.0581 validation: 0.977200
+Iter-11500 loss: 0.0667 validation: 0.977400
+Iter-11600 loss: 0.0266 validation: 0.975600
+Iter-11700 loss: 0.0304 validation: 0.978000
+Iter-11800 loss: 0.0245 validation: 0.978800
+Iter-11900 loss: 0.0408 validation: 0.977400
+Iter-12000 loss: 0.0268 validation: 0.977200
+Iter-12100 loss: 0.1054 validation: 0.977400
+Iter-12200 loss: 0.0101 validation: 0.977200
+Iter-12300 loss: 0.0461 validation: 0.978600
+Iter-12400 loss: 0.0346 validation: 0.978000
+Iter-12500 loss: 0.0179 validation: 0.978600
+Iter-12600 loss: 0.0258 validation: 0.978000
+Iter-12700 loss: 0.0239 validation: 0.977600
+Iter-12800 loss: 0.0192 validation: 0.978800
+Iter-12900 loss: 0.0419 validation: 0.977400
+Iter-13000 loss: 0.0146 validation: 0.977800
+Iter-13100 loss: 0.0452 validation: 0.978200
+Iter-13200 loss: 0.0096 validation: 0.977200
+Iter-13300 loss: 0.0202 validation: 0.978200
+Iter-13400 loss: 0.1656 validation: 0.977200
+Iter-13500 loss: 0.0187 validation: 0.977200
+Iter-13600 loss: 0.0207 validation: 0.978000

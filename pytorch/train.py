@@ -1,13 +1,17 @@
 import time
 import torch
 import torch.optim as optim
+import numpy as np
 from utils import *
 from consts import *
+from torch.autograd import Variable
 
-def train_net(net, testloader, trainloader, method=None):
+def train_net(net, testloader, trainloader, method=None, h=0.1, double=1000):
+    # vis = visdom.Visdom()
     # print('1')
     net.to(device)
-    optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)#, weight_decay=0.005)
+
+    optimizer = optim.SGD(net.parameters(), lr=0.04)#, weight_decay=0.005)
     timestr = time.strftime("%Y%m%d-%H%M%S")
     if method == None:
         methodstring =  ''
@@ -23,7 +27,10 @@ def train_net(net, testloader, trainloader, method=None):
     totaltime = 0
     i = 0
     # print('3')
-    for epoch in range(40):  # loop over the dataset multiple times
+    for epoch in range(80):  # loop over the dataset multiple times
+        # a = net.fcs.weight.data.cpu().numpy()[0].reshape(28, 28)
+        # b = (a - np.min(a)) / np.ptp(a)
+        # vis.image(b)
         running_loss = 0.0
         train_correct = 0
         train_total = 0
@@ -44,25 +51,30 @@ def train_net(net, testloader, trainloader, method=None):
             train_total += labels.size(0)
             train_correct += (predicted==labels).sum().item()
             loss = criterion(outputs, labels)
+            # regloss = torch.tensor(0.0, device=device)
+            # for k in range(0, net.num_layers-1):
+            #     regloss += 2 * torch.norm(net.fc[k + 1].weight - net.fc[k].weight)
+            #     regloss += torch.norm(net.fc[k + 1].bias - net.fc[k].bias)
+            # loss = loss + regloss/h
             loss.backward()
+            # newloss.backward()
             optimizer.step()
 
             # print statistics
             running_loss += loss.item()
             totaltime += time.time()-start
             # print('6')
-            if i % 1000 == 999:    # print every 2000 mini-batches
-                accuracy = getAccuracy(net, testloader)
-                print('E:%d, iter-%5d loss: %.3f, time: %.3f, validation: %.3f %%, train acc.: %.3f %%' %
-                      (epoch + 1, i+1,  running_loss / 2000, totaltime, 100 * accuracy, train_correct/train_total*100))
-                f.write('E:%d, iter-%d loss: %.3f, time: %.3f, validation: %.3f %%, train acc.: %.3f %%\n' %
-                      (epoch + 1, i+1,  running_loss / 2000, totaltime, 100 * accuracy, train_correct/train_total*100))
-                train_correct = 0
-                train_total = 0
-                running_loss = 0.0
             i+=1
-            
-            if i % 2000 == 1999 and method != None:
+
+            if i % double == double-1 and method != None:
                 net.doubleLayers(method)
                 net.to(device)
+        if epoch % 2 == 0:
+            net.eval()
+            accuracy = getAccuracy(net, testloader)
+            net.train()
+            print('E:%d, iter-%5d loss: %.3f, time: %.3f, validation: %.3f %%, train acc.: %.3f %%' %
+                  (epoch + 1, i+1,  running_loss / 2000, totaltime, 100 * accuracy, train_correct/train_total*100))
+            f.write('E:%d, iter-%d loss: %.3f, time: %.3f, validation: %.3f %%, train acc.: %.3f %%\n' %
+                    (epoch + 1, i+1,  running_loss / 2000, totaltime, 100 * accuracy, train_correct/train_total*100))
     f.close()

@@ -1,0 +1,21 @@
+Experiment-1
+E:1, iter- 2000 loss: 0.817, time: 11.441, validation: 52.910 %, train acc.: 72.125 %
+E:1, iter- 4000 loss: 0.887, time: 22.645, validation: 52.490 %, train acc.: 69.683 %
+E:1, iter- 6000 loss: 0.922, time: 33.884, validation: 52.030 %, train acc.: 68.633 %
+E:1, iter- 8000 loss: 0.935, time: 44.836, validation: 51.800 %, train acc.: 68.500 %
+E:2, iter-10333 loss: 0.797, time: 57.704, validation: 51.870 %, train acc.: 73.133 %
+E:2, iter-12333 loss: 0.854, time: 68.783, validation: 52.520 %, train acc.: 70.525 %
+E:2, iter-14333 loss: 0.906, time: 79.748, validation: 51.950 %, train acc.: 69.442 %
+E:2, iter-16333 loss: 0.951, time: 90.680, validation: 51.470 %, train acc.: 68.150 %
+E:3, iter-18666 loss: 0.796, time: 103.441, validation: 51.650 %, train acc.: 72.833 %
+E:3, iter-20666 loss: 0.839, time: 114.377, validation: 51.780 %, train acc.: 71.675 %
+E:3, iter-22666 loss: 0.887, time: 125.385, validation: 52.110 %, train acc.: 69.625 %
+E:3, iter-24666 loss: 0.937, time: 136.395, validation: 51.970 %, train acc.: 68.017 %
+E:4, iter-27000 loss: 0.757, time: 149.311, validation: 51.660 %, train acc.: 74.242 %
+E:4, iter-29000 loss: 0.841, time: 160.205, validation: 52.250 %, train acc.: 71.500 %
+E:4, iter-31000 loss: 0.879, time: 171.169, validation: 51.350 %, train acc.: 70.367 %
+E:4, iter-33000 loss: 0.918, time: 182.155, validation: 50.730 %, train acc.: 68.592 %
+E:5, iter-35333 loss: 0.746, time: 195.263, validation: 51.760 %, train acc.: 74.858 %
+E:5, iter-37333 loss: 0.820, time: 206.356, validation: 51.880 %, train acc.: 72.275 %
+E:5, iter-39333 loss: 0.843, time: 217.471, validation: 52.360 %, train acc.: 71.158 %
+E:5, iter-41333 loss: 0.919, time: 228.775, validation: 51.230 %, train acc.: 68.892 %

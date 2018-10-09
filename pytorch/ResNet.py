@@ -9,6 +9,7 @@ class ResNet(nn.Module):
     def __init__(self, num_layers):
         self.num_layers = num_layers
         super(ResNet, self).__init__()
+        print('Number of filters: ' + str(CONV_WIDTH))
         self.fcf = nn.Linear(CONV_WIDTH*IMAGE_DIMENSIONS, NUM_CLASSES)
         self.convs = nn.Conv2d(CHANNELS, CONV_WIDTH, 5, padding=(2, 2))
         self.conv = nn.ModuleList()
@@ -22,7 +23,7 @@ class ResNet(nn.Module):
         for i in range(self.num_layers):
             x = x + F.relu(self.conv[i](x))
         x = x.view(-1, CONV_WIDTH*IMAGE_DIMENSIONS)
-        x = F.relu(self.fcf(x))
+        x = self.fcf(x)
         return x
     
     def doubleLayers(self, method):

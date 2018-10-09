@@ -1,0 +1,37 @@
+Net: resnet
+Iterations: 15000
+Step size: 0.1
+Minibatch size: 64
+Number of experiments: 4
+Nonlinearity: relu
+Solver: sgd
+Optimisation: none
+Number of layers: 4
+Extracting data/MNIST_data/train-images-idx3-ubyte.gz
+Extracting data/MNIST_data/train-labels-idx1-ubyte.gz
+Extracting data/MNIST_data/t10k-images-idx3-ubyte.gz
+Extracting data/MNIST_data/t10k-labels-idx1-ubyte.gz
+
+Experimenting on sgd
+
+Experiment-1
+Iter-100 loss: 0.5937 validation: 0.863800
+Iter-200 loss: 0.5930 validation: 0.885000
+Iter-300 loss: 0.1553 validation: 0.934200
+Iter-400 loss: 0.2777 validation: 0.945800
+Iter-500 loss: 0.2461 validation: 0.949000
+Iter-600 loss: 0.1661 validation: 0.948400
+Iter-700 loss: 0.1627 validation: 0.956000
+Iter-800 loss: 0.0892 validation: 0.957400
+Iter-900 loss: 0.1319 validation: 0.962000
+Iter-1000 loss: 0.0720 validation: 0.961000
+Iter-1100 loss: 0.0550 validation: 0.958400
+Iter-1200 loss: 0.0794 validation: 0.966000
+Iter-1300 loss: 0.0771 validation: 0.967400
+Iter-1400 loss: 0.0772 validation: 0.966800
+Iter-1500 loss: 0.0916 validation: 0.968600
+Iter-1600 loss: 0.0958 validation: 0.964600
+Iter-1700 loss: 0.2052 validation: 0.966200
+Iter-1800 loss: 0.0576 validation: 0.970200
+Iter-1900 loss: 0.1070 validation: 0.971000
+Iter-2000 loss: 0.1037 validation: 0.969800

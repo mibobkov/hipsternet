@@ -44,8 +44,16 @@ def getAverageForName(basename, timing):
     return getAverage(AllXs, AllYs)
 
 def plotDataForBase(ax, basename, timing, notation):
-    Xs, Ys = getAverageForName(basename, timing)
-    ax.plot(Xs, Ys, color=notation, label=basename)
+    separate = False
+    if separate:
+        for i in range(0, 10):
+            fn = basename + str(i)
+            if os.path.isfile('logs/' + fn):
+                Xs, Ys = getValues(getExperimentsData(fn), timing, 0)
+                ax.plot(Xs, Ys, color=notation, label=basename)
+    else: 
+        Xs, Ys = getAverageForName(basename, timing)
+        ax.plot(Xs, Ys, color=notation, label=basename)
 
 def getExperimentsData(filename):
     f = open('logs/' + filename)

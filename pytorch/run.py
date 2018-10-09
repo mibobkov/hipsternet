@@ -16,17 +16,18 @@ def run():
         [transforms.ToTensor(),
          transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
-    DATASET_DOWNLOAD_FUNC = torchvision.datasets.CIFAR100
+    # Change consts when changing dataset
+    DATASET_DOWNLOAD_FUNC = torchvision.datasets.CIFAR10
 
     trainset = DATASET_DOWNLOAD_FUNC(root='./data', train=True,
                                      download=True, transform=transform)
     trainloader = torch.utils.data.DataLoader(trainset, batch_size=BATCH_SIZE,
-                                              shuffle=True, num_workers=2)
+                                              shuffle=True, num_workers=1)
 
     testset = DATASET_DOWNLOAD_FUNC(root='./data', train=False,
                                     download=True, transform=transform)
     testloader = torch.utils.data.DataLoader(testset, batch_size=BATCH_SIZE,
-                                             shuffle=False, num_workers=2)
+                                             shuffle=False, num_workers=0)
     parser = argparse.ArgumentParser()
     parser.add_argument('--layers', default='2', type=int)
     parser.add_argument('--net', default='resnet', choices='resnet, resnetfc')
@@ -54,14 +55,24 @@ def run():
     #         train_net(ResNetFc(ns.layers, leapfrog=True), testloader, trainloader)
     #     else:
     #         train_net(ResNetFc(ns.layers, antisymmetric=False), testloader, trainloader)
-    for i in range(0, 2):
-        train_net(ResNetFc(4, leapfrog=True), testloader, trainloader)
-        train_net(ResNetFc(4, antisymmetric=True), testloader, trainloader)
-        train_net(ResNetFc(4), testloader, trainloader)
+    # for i in range(0, 1):
+    #     train_net(ResNetFc(4), testloader, trainloader)
+    # for i in range(0, 3):
+        # train_net(ResNetFc(8), testloader, trainloader)
+        # train_net(ResNetFc(8, antisymmetric=True), testloader, trainloader)
+        # train_net(ResNetFc(8, leapfrog=True, h=1), testloader, trainloader, h=1)
+        # train_net(ResNetFc(8, leapfrog=True, h=0.1), testloader, trainloader, h=0.1)
+        # train_net(ResNetFc(8, leapfrog=True, h=0.01), testloader, trainloader, h=0.01)
+        # train_net(ResNetFc(8, dropOut=True), testloader, trainloader)
+    for i in range(0, 5):
         # train_net(ResNet(1), testloader, trainloader, Multilevel.random)
         # train_net(ResNet(1), testloader, trainloader, Multilevel.copy)
-        # train_net(ResNet(1), testloader, trainloader, Multilevel.interleave)
-        # train_net(ResNet(1), testloader, trainloader, Multilevel.interpolate)
+        train_net(ResNet(1), testloader, trainloader, Multilevel.interleave)
+        # CONV_WIDTH *= 2
+        # train_net(ResNet(1), testloader, trainloader, Multilevel.interpolate) #, double=1000)
+        # train_net(ResNet(1), testloader, trainloader, Multilevel.interpolate, double=500)
+        # train_net(ResNet(1), testloader, trainloader, Multilevel.interpolate, double=2000)
+        # train_net(ResNet(1), testloader, trainloader, Multilevel.interpolate, double=3000)
 
 if __name__ == '__main__':
     run()
